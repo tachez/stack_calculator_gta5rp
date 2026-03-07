@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор веса - выбор лимита 9.85 / 9.9 / 9.95 кг</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        .calculator {
+            max-width: 1600px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+        .header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+        .main {
+            display: flex;
+            height: calc(100vh - 120px);
+            min-height: 800px;
+        }
+        .left-panel {
+            flex: 1;
+            border-right: 2px solid #e0e0e0;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .right-panel {
+            flex: 1;
+            background: white;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .panel-header {
+            background: #4a5568;
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        /* Стили для вкладок */
+        .tabs-container {
+            background: #2d3748;
+            padding: 8px 8px 0 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+        .tab {
+            background: #4a5568;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+            min-width: 100px;
+        }
+        .tab:hover {
+            background: #5f6b7a;
+        }
+        .tab.active {
+            background: #667eea;
+            font-weight: bold;
+        }
+        .tab-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 12px;
+        }
+        .tab-edit {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            opacity: 0.7;
+        }
+        .tab-edit:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.2);
+        }
+        .add-tab {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .add-tab:hover {
+            background: #38a169;
+        }
+        
+        /* Контейнер для содержимого вкладки */
+        .tab-content {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 80px);
+        }
+        
+        .items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 6px 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background-color 0.2s;
+            height: 42px;
+        }
+        .item-row:hover {
+            background: #ebf8ff;
+        }
+        .item-row.focused {
+            background: #bee3f8;
+            box-shadow: 0 0 0 2px #4299e1;
+        }
+        .row-number {
+            width: 30px;
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 13px;
+        }
+        .weight-input {
+            width: 110px;
+            padding: 5px 6px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 13px;
+            transition: all 0.2s;
+            height: 32px;
+        }
+        .weight-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        .calculated-field {
+            width: 90px;
+            padding: 5px 6px;
+            background: #edf2f7;
+            border-radius: 5px;
+            font-size: 13px;
+            text-align: right;
+            border: 1px solid #cbd5e0;
+            color: #2d3748;
+            font-family: 'Courier New', monospace;
+            height: 32px;
+        }
+        .calculated-field.highlight {
+            background: #c6f6d5;
+            border-color: #38a169;
+            font-weight: bold;
+        }
+        
+        /* Третья колонка - серая */
+        .calculated-field.rounded-field {
+            background: #e2e8f0;
+            border-color: #a0aec0;
+            color: #2d3748;
+        }
+        
+        /* Заголовки колонок */
+        .columns-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            font-size: 11px;
+            color: #718096;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .col-number {
+            width: 30px;
+        }
+        .col-input {
+            width: 110px;
+            text-align: center;
+        }
+        .col-calc {
+            width: 90px;
+            text-align: center;
+        }
+        .col-calc.highlight {
+            color: #38a169;
+        }
+        .col-calc.rounded {
+            color: #4a5568;
+        }
+        
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px 8px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            height: 38px;
+        }
+        .block-title {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 14px;
+        }
+        .block-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .small-btn {
+            padding: 5px 10px;
+            background: #cbd5e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+            height: 28px;
+        }
+        .small-btn:hover {
+            background: #a0aec0;
+        }
+        
+        /* Правая панель */
+        .right-panel-content {
+            padding: 15px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        /* Стили для переключателей лимита */
+        .limit-selector {
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e0;
+        }
+        .limit-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .radio-label {
+            font-weight: bold;
+        }
+        .radio-label.limit-985 {
+            color: #2c3e50;
+        }
+        .radio-label.limit-99 {
+            color: #2c3e50;
+        }
+        .radio-label.limit-995 {
+            color: #2c3e50;
+        }
+        .active-limit-badge {
+            background: #48bb78;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .target-info {
+            background: linear-gradient(135deg, #f6f9fc 0%, #e6f0f5 100%);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #bdd4e8;
+        }
+        .target-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .target-value small {
+            font-size: 14px;
+            color: #718096;
+            display: block;
+            margin-top: 5px;
+        }
+        .best-result {
+            background: #c6f6d5;
+            border: 2px solid #38a169;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+        }
+        .best-sum {
+            font-size: 24px;
+            font-weight: bold;
+            color: #22543d;
+        }
+        .difference {
+            font-size: 16px;
+            color: #2f855a;
+        }
+        .warning-message {
+            background: #fed7d7;
+            border: 1px solid #f56565;
+            color: #c53030;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .selected-items {
+            background: #fef3c7;
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #fbbf24;
+        }
+        .selected-items h3 {
+            margin: 0 0 12px 0;
+            color: #92400e;
+            font-size: 16px;
+        }
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* Стиль для элемента с номером в кружке */
+        .selected-item-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .selected-item-row:last-child {
+            border-bottom: none;
+        }
+        
+        .number-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #4299e1;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .item-weight-info {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .item-weight-value {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 15px;
+        }
+        
+        .item-weight-unit {
+            font-size: 11px;
+            color: #718096;
+            margin-left: 2px;
+        }
+        
+        .no-items {
+            color: #718096;
+            font-style: italic;
+            font-size: 13px;
+            padding: 10px 0;
+        }
+        
+        .action-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+            margin: 15px 0;
+        }
+        .action-button:hover {
+            background: #5a67d8;
+        }
+        .stats {
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid #e2e8f0;
+        }
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .quick-btn {
+            flex: 1;
+            min-width: 70px;
+            padding: 6px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+        .quick-btn:hover {
+            background: #cbd5e0;
+        }
+        .hint {
+            font-size: 11px;
+            color: #718096;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .keyboard-hint {
+            background: #2d3748;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        .strict-limit {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="header">
+            <h1>🧮 Калькулятор оптимального веса</h1>
+            <p>Для каждой вкладки свой расчет • Выберите лимит: 9.85 / 9.9 / 9.95 кг</p>
+        </div>
+        <div class="main">
+            <!-- Левая панель с вкладками -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    📦 Блоки предметов (20 строк в каждом)
+                </div>
+                
+                <!-- Вкладки -->
+                <div class="tabs-container" id="tabsContainer"></div>
+                
+                <!-- Содержимое активной вкладки -->
+                <div class="tab-content" id="tabContent"></div>
+            </div>
+
+            <!-- Правая панель с результатами для текущей вкладки -->
+            <div class="right-panel">
+                <div class="panel-header" id="rightPanelHeader">
+                    🎯 Текущий блок: 
+                </div>
+                <div class="right-panel-content">
+                    <!-- Переключатель лимита -->
+                    <div class="limit-selector">
+                        <div class="limit-title">🎯 Выберите целевой вес:</div>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="targetLimit" value="9.85" checked onchange="changeTargetLimit(9.85)">
+                                <span class="radio-label limit-985">9.85 кг (строго меньше)</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="targetLimit" value="9.9" onchange="changeTargetLimit(9.9)">
+                                <span class="radio-label limit-99">9.9 кг (строго меньше)</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="targetLimit" value="9.95" onchange="changeTargetLimit(9.95)">
+                                <span class="radio-label limit-995">9.95 кг (строго меньше)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="target-info">
+                        <div style="text-align: center; margin-bottom: 5px; font-size: 13px;">Текущий целевой вес:</div>
+                        <div class="target-value" id="targetDisplay">9.85 кг</div>
+                    </div>
+
+                    <div class="best-result" id="bestResult">
+                        <div style="margin-bottom: 5px; font-size: 13px;">🏆 Лучшая сумма (из третьей колонки):</div>
+                        <div class="best-sum" id="bestSum">0.0 кг</div>
+                        <div class="difference" id="difference">До цели: 9.85 кг</div>
+                    </div>
+
+                    <div id="warningMessage" class="warning-message" style="display: none;">
+                        ⚠️ Сумма не должна достигать или превышать выбранный лимит
+                    </div>
+
+                    <div class="selected-items" id="selectedItems">
+                        <h3>✅ Выбранные предметы из текущего блока:</h3>
+                        <div class="items-list" id="itemsList">
+                            <span class="no-items">Нет выбранных предметов</span>
+                        </div>
+                    </div>
+
+                    <button class="action-button" onclick="calculateBestCombination()">
+                        🔄 Рассчитать для текущего блока
+                    </button>
+
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="fillAllRandomValues()">🎲 Все</button>
+                        <button class="quick-btn" onclick="clearAllBlocks()">🗑️ Очистить</button>
+                        <button class="quick-btn" onclick="focusCurrentBlock()">⌨️ Фокус</button>
+                    </div>
+
+                    <div class="stats" id="stats">
+                        <div>📊 Всего блоков: <span id="totalBlocks">10</span></div>
+                        <div>📋 Текущий блок: <span id="currentBlockName">Блок 1</span></div>
+                        <div>⚖️ Сумма первых: <span id="totalSumFirst">0.000</span> кг</div>
+                        <div>⚖️ Сумма вторых: <span id="totalSumSecond">0.000</span> кг</div>
+                        <div>⚖️ Сумма третьих: <span id="totalSumThird">0.0</span> кг</div>
+                        <div>🔢 Активных в блоке: <span id="activeCount">0</span></div>
+                    </div>
+                    
+                    <div class="hint">
+                        💡 Для расчета используются значения из <strong>ТРЕТЬЕЙ колонки</strong> (серые поля) <strong>текущего блока</strong><br>
+                        <span class="strict-limit" id="limitHint">❌ Сумма не может быть равна или больше 9.85 кг</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Текущий выбранный лимит (по умолчанию 9.85)
+        let CURRENT_TARGET = 9.85;
+        let CURRENT_LIMIT = 9.85;
+        
+        const BLOCKS_COUNT = 10;
+        const ROWS_PER_BLOCK = 20;
+        
+        let blocks = [];
+        let activeBlockIndex = 0;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeBlocks();
+            renderTabs();
+            renderActiveBlock();
+            updateRightPanelHeader();
+            calculateBestCombination();
+        });
+
+        // Функция для смены лимита
+        function changeTargetLimit(newLimit) {
+            CURRENT_TARGET = newLimit;
+            CURRENT_LIMIT = newLimit;
+            
+            // Обновляем отображение
+            document.getElementById('targetDisplay').textContent = CURRENT_TARGET.toFixed(2) + ' кг';
+            document.getElementById('limitHint').innerHTML = `❌ Сумма не может быть равна или больше ${CURRENT_TARGET.toFixed(2)} кг`;
+            
+            // Пересчитываем комбинацию для текущего блока
+            calculateBestCombination();
+        }
+
+        function initializeBlocks() {
+            blocks = [];
+            for (let blockNum = 1; blockNum <= BLOCKS_COUNT; blockNum++) {
+                const block = {
+                    id: blockNum,
+                    name: `Блок ${blockNum}`,
+                    items: []
+                };
+                
+                for (let rowNum = 1; rowNum <= ROWS_PER_BLOCK; rowNum++) {
+                    block.items.push({
+                        blockId: blockNum,
+                        blockName: block.name,
+                        rowNum: rowNum,
+                        globalIndex: (blockNum - 1) * ROWS_PER_BLOCK + rowNum,
+                        weight1: 0,
+                        weight2: 0,
+                        weight3: 0
+                    });
+                }
+                
+                blocks.push(block);
+            }
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabsContainer');
+            container.innerHTML = '';
+            
+            blocks.forEach((block, index) => {
+                const tab = document.createElement('div');
+                tab.className = `tab ${index === activeBlockIndex ? 'active' : ''}`;
+                tab.dataset.index = index;
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'tab-name';
+                nameSpan.textContent = block.name;
+                nameSpan.ondblclick = (e) => {
+                    e.stopPropagation();
+                    editTabName(index);
+                };
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'tab-edit';
+                editBtn.innerHTML = '✎';
+                editBtn.title = 'Переименовать';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    editTabName(index);
+                };
+                
+                tab.appendChild(nameSpan);
+                tab.appendChild(editBtn);
+                
+                tab.onclick = () => switchToBlock(index);
+                
+                container.appendChild(tab);
+            });
+            
+            const addBtn = document.createElement('button');
+            addBtn.className = 'add-tab';
+            addBtn.innerHTML = '+ Новый';
+            addBtn.onclick = addNewBlock;
+            container.appendChild(addBtn);
+        }
+
+        function editTabName(index) {
+            const newName = prompt('Введите название блока:', blocks[index].name);
+            if (newName && newName.trim() !== '') {
+                blocks[index].name = newName.trim();
+                blocks[index].items.forEach(item => {
+                    item.blockName = blocks[index].name;
+                });
+                renderTabs();
+                renderActiveBlock();
+                updateRightPanelHeader();
+                calculateBestCombination();
+            }
+        }
+
+        function switchToBlock(index) {
+            activeBlockIndex = index;
+            renderTabs();
+            renderActiveBlock();
+            updateRightPanelHeader();
+            calculateBestCombination();
+        }
+
+        function updateRightPanelHeader() {
+            const header = document.getElementById('rightPanelHeader');
+            header.textContent = `🎯 Текущий блок: ${blocks[activeBlockIndex].name}`;
+            
+            document.getElementById('currentBlockName').textContent = blocks[activeBlockIndex].name;
+            document.getElementById('totalBlocks').textContent = blocks.length;
+        }
+
+        function addNewBlock() {
+            if (blocks.length >= 20) {
+                alert('Максимальное количество блоков - 20');
+                return;
+            }
+            
+            const newBlockNum = blocks.length + 1;
+            const newBlock = {
+                id: newBlockNum,
+                name: `Блок ${newBlockNum}`,
+                items: []
+            };
+            
+            for (let rowNum = 1; rowNum <= ROWS_PER_BLOCK; rowNum++) {
+                newBlock.items.push({
+                    blockId: newBlockNum,
+                    blockName: newBlock.name,
+                    rowNum: rowNum,
+                    globalIndex: (newBlockNum - 1) * ROWS_PER_BLOCK + rowNum,
+                    weight1: 0,
+                    weight2: 0,
+                    weight3: 0
+                });
+            }
+            
+            blocks.push(newBlock);
+            activeBlockIndex = blocks.length - 1;
+            renderTabs();
+            renderActiveBlock();
+            updateRightPanelHeader();
+            calculateBestCombination();
+        }
+
+        function renderActiveBlock() {
+            const container = document.getElementById('tabContent');
+            container.innerHTML = '';
+            
+            const block = blocks[activeBlockIndex];
+            
+            const header = document.createElement('div');
+            header.className = 'block-header';
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'block-title';
+            titleSpan.textContent = `${block.name} (20 строк)`;
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'block-actions';
+            
+            const randomBtn = document.createElement('button');
+            randomBtn.className = 'small-btn';
+            randomBtn.innerHTML = '🎲 Случ';
+            randomBtn.onclick = () => fillBlockRandom(activeBlockIndex);
+            
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'small-btn';
+            clearBtn.innerHTML = '🗑️ Очист';
+            clearBtn.onclick = () => clearBlock(activeBlockIndex);
+            
+            actionsDiv.appendChild(randomBtn);
+            actionsDiv.appendChild(clearBtn);
+            
+            header.appendChild(titleSpan);
+            header.appendChild(actionsDiv);
+            container.appendChild(header);
+            
+            const columnsHeader = document.createElement('div');
+            columnsHeader.className = 'columns-header';
+            columnsHeader.innerHTML = `
+                <span class="col-number">№</span>
+                <span class="col-input">Вес</span>
+                <span class="col-calc">Вес/10</span>
+                <span class="col-calc rounded">Окр(вес/10)</span>
+            `;
+            container.appendChild(columnsHeader);
+            
+            const itemsContainer = document.createElement('div');
+            itemsContainer.className = 'items-container';
+            
+            block.items.forEach((item, idx) => {
+                const row = createRow(block, item, idx + 1);
+                itemsContainer.appendChild(row);
+            });
+            
+            container.appendChild(itemsContainer);
+        }
+
+        function createRow(block, item, rowNumber) {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.id = `row-${block.id}-${rowNumber}`;
+            
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'row-number';
+            numberSpan.textContent = `${rowNumber}.`;
+            
+            const input1 = document.createElement('input');
+            input1.type = 'text';
+            input1.className = 'weight-input';
+            input1.placeholder = '0.00000';
+            input1.id = `weight-${block.id}-${rowNumber}`;
+            input1.value = item.weight1.toFixed(5);
+            input1.setAttribute('inputmode', 'decimal');
+            
+            input1.addEventListener('focus', function() {
+                this.select();
+                document.querySelectorAll('.item-row').forEach(r => r.classList.remove('focused'));
+                row.classList.add('focused');
+            });
+            
+            input1.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    formatCurrentValue(block.id, rowNumber);
+                    if (rowNumber < ROWS_PER_BLOCK) {
+                        document.getElementById(`weight-${block.id}-${rowNumber + 1}`).focus();
+                    }
+                } else if (e.key === 'ArrowUp' && rowNumber > 1) {
+                    e.preventDefault();
+                    formatCurrentValue(block.id, rowNumber);
+                    document.getElementById(`weight-${block.id}-${rowNumber - 1}`).focus();
+                } else if (e.key === 'ArrowDown' && rowNumber < ROWS_PER_BLOCK) {
+                    e.preventDefault();
+                    formatCurrentValue(block.id, rowNumber);
+                    document.getElementById(`weight-${block.id}-${rowNumber + 1}`).focus();
+                }
+            });
+            
+            input1.addEventListener('blur', function() {
+                formatCurrentValue(block.id, rowNumber);
+            });
+            
+            const input2 = document.createElement('input');
+            input2.type = 'text';
+            input2.className = 'calculated-field';
+            input2.id = `weight2-${block.id}-${rowNumber}`;
+            input2.readOnly = true;
+            input2.value = item.weight2.toFixed(5);
+            
+            const input3 = document.createElement('input');
+            input3.type = 'text';
+            input3.className = 'calculated-field rounded-field';
+            input3.id = `weight3-${block.id}-${rowNumber}`;
+            input3.readOnly = true;
+            input3.value = item.weight3.toFixed(1);
+            input3.title = 'Это значение используется для расчета суммы текущего блока';
+            
+            row.appendChild(numberSpan);
+            row.appendChild(input1);
+            row.appendChild(input2);
+            row.appendChild(input3);
+            
+            return row;
+        }
+
+        function formatCurrentValue(blockId, rowNumber) {
+            const input1 = document.getElementById(`weight-${blockId}-${rowNumber}`);
+            let rawValue = input1.value.replace(',', '.');
+            rawValue = rawValue.replace(/[^\d.-]/g, '');
+            
+            const parts = rawValue.split('.');
+            if (parts.length > 2) {
+                rawValue = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            let value1 = parseFloat(rawValue);
+            if (isNaN(value1)) {
+                value1 = 0;
+            }
+            
+            value1 = Math.round(value1 * 100000) / 100000;
+            updateRowValues(blockId, rowNumber, value1);
+        }
+
+        function updateRowValues(blockId, rowNumber, value1) {
+            const block = blocks.find(b => b.id === blockId);
+            if (!block) return;
+            
+            const itemIndex = rowNumber - 1;
+            
+            block.items[itemIndex].weight1 = value1;
+            
+            const value2 = value1 / 10;
+            block.items[itemIndex].weight2 = value2;
+            
+            const value3 = Math.round(value2 * 10) / 10;
+            block.items[itemIndex].weight3 = value3;
+            
+            const input1 = document.getElementById(`weight-${blockId}-${rowNumber}`);
+            const input2 = document.getElementById(`weight2-${blockId}-${rowNumber}`);
+            const input3 = document.getElementById(`weight3-${blockId}-${rowNumber}`);
+            
+            if (input1) input1.value = value1.toFixed(5);
+            if (input2) input2.value = value2.toFixed(5);
+            if (input3) input3.value = value3.toFixed(1);
+            
+            updateStats();
+            
+            if (blockId === blocks[activeBlockIndex].id) {
+                calculateBestCombination();
+            }
+        }
+
+        function updateStats() {
+            const currentBlock = blocks[activeBlockIndex];
+            
+            let totalSumFirst = 0;
+            let totalSumSecond = 0;
+            let totalSumThird = 0;
+            let activeCount = 0;
+            
+            currentBlock.items.forEach(item => {
+                totalSumFirst += item.weight1;
+                totalSumSecond += item.weight2;
+                totalSumThird += item.weight3;
+                if (item.weight1 > 0) activeCount++;
+            });
+            
+            document.getElementById('totalSumFirst').textContent = totalSumFirst.toFixed(5);
+            document.getElementById('totalSumSecond').textContent = totalSumSecond.toFixed(5);
+            document.getElementById('totalSumThird').textContent = totalSumThird.toFixed(1);
+            document.getElementById('activeCount').textContent = activeCount;
+        }
+
+        function findBestCombination() {
+            const currentBlock = blocks[activeBlockIndex];
+            const validItems = [];
+            
+            currentBlock.items.forEach(item => {
+                if (item.weight3 > 0) {
+                    validItems.push({
+                        blockId: currentBlock.id,
+                        blockName: currentBlock.name,
+                        rowNum: item.rowNum,
+                        weight: item.weight3,
+                        originalWeight: item.weight1,
+                        secondWeight: item.weight2
+                    });
+                }
+            });
+            
+            if (validItems.length === 0) {
+                return { sum: 0, selected: [] };
+            }
+            
+            // Используем масштаб 10 для работы с 1 знаком после запятой
+            const scale = 10;
+            // Цель в масштабированных единицах - округляем вниз, чтобы гарантированно быть меньше лимита
+            const targetScaled = Math.floor(CURRENT_TARGET * scale);
+            
+            const dp = new Array(targetScaled + 1);
+            for (let i = 0; i <= targetScaled; i++) {
+                dp[i] = { sum: 0, items: [] };
+            }
+            
+            for (const item of validItems) {
+                const itemWeightScaled = Math.round(item.weight * scale);
+                
+                for (let w = targetScaled; w >= itemWeightScaled; w--) {
+                    const prevWeight = w - itemWeightScaled;
+                    const newSum = dp[prevWeight].sum + item.weight;
+                    
+                    if (dp[prevWeight].sum > 0 || prevWeight === 0) {
+                        // Строгая проверка: сумма должна быть <= CURRENT_TARGET и строго меньше CURRENT_LIMIT
+                        if (newSum > dp[w].sum && newSum <= CURRENT_TARGET && newSum < CURRENT_LIMIT) {
+                            dp[w].sum = newSum;
+                            dp[w].items = [...dp[prevWeight].items, item];
+                        }
+                    }
+                }
+            }
+            
+            let bestSum = 0;
+            let bestItems = [];
+            
+            // Ищем наилучшую сумму, которая строго меньше CURRENT_LIMIT
+            for (let w = targetScaled; w >= 0; w--) {
+                if (dp[w].sum > bestSum && dp[w].sum < CURRENT_LIMIT) {
+                    bestSum = dp[w].sum;
+                    bestItems = dp[w].items;
+                }
+            }
+            
+            bestItems.sort((a, b) => a.rowNum - b.rowNum);
+            
+            return { sum: bestSum, selected: bestItems };
+        }
+
+        function calculateBestCombination() {
+            const result = findBestCombination();
+            const difference = (CURRENT_TARGET - result.sum).toFixed(1);
+            
+            document.getElementById('bestSum').textContent = result.sum.toFixed(1) + ' кг';
+            document.getElementById('difference').textContent = `До цели: ${difference} кг`;
+            
+            // Показываем предупреждение, если сумма достигла лимита (такого не должно быть, но на всякий случай)
+            const warningMsg = document.getElementById('warningMessage');
+            if (result.sum >= CURRENT_LIMIT) {
+                warningMsg.style.display = 'flex';
+            } else {
+                warningMsg.style.display = 'none';
+            }
+            
+            const itemsList = document.getElementById('itemsList');
+            itemsList.innerHTML = '';
+            
+            if (result.selected.length === 0) {
+                itemsList.innerHTML = '<span class="no-items">Нет выбранных предметов в этом блоке</span>';
+            } else {
+                result.selected.forEach(item => {
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'selected-item-row';
+                    
+                    const circle = document.createElement('span');
+                    circle.className = 'number-circle';
+                    circle.textContent = item.rowNum;
+                    
+                    const weightInfo = document.createElement('div');
+                    weightInfo.className = 'item-weight-info';
+                    
+                    const weightSpan = document.createElement('span');
+                    weightSpan.className = 'item-weight-value';
+                    weightSpan.textContent = item.weight.toFixed(1);
+                    
+                    const unitSpan = document.createElement('span');
+                    unitSpan.className = 'item-weight-unit';
+                    unitSpan.textContent = 'кг';
+                    
+                    weightInfo.appendChild(weightSpan);
+                    weightInfo.appendChild(unitSpan);
+                    
+                    itemRow.appendChild(circle);
+                    itemRow.appendChild(weightInfo);
+                    
+                    itemRow.style.cursor = 'pointer';
+                    itemRow.onclick = function() {
+                        document.getElementById(`weight-${item.blockId}-${item.rowNum}`)?.focus();
+                    };
+                    
+                    itemsList.appendChild(itemRow);
+                });
+            }
+            
+            let combinationInfo = document.getElementById('combinationInfo');
+            if (!combinationInfo) {
+                combinationInfo = document.createElement('div');
+                combinationInfo.id = 'combinationInfo';
+                combinationInfo.style.marginTop = '8px';
+                combinationInfo.style.padding = '6px';
+                combinationInfo.style.background = '#e6fffa';
+                combinationInfo.style.borderRadius = '4px';
+                combinationInfo.style.fontSize = '11px';
+                document.getElementById('stats').appendChild(combinationInfo);
+            }
+            
+            combinationInfo.innerHTML = `📦 Предметов в комбинации: ${result.selected.length}`;
+        }
+
+        function focusCurrentBlock() {
+            const firstInput = document.querySelector(`#tabContent .weight-input`);
+            if (firstInput) firstInput.focus();
+        }
+
+        function clearBlock(blockIndex) {
+            const block = blocks[blockIndex];
+            block.items.forEach((item, idx) => {
+                updateRowValues(block.id, idx + 1, 0);
+            });
+        }
+
+        function fillBlockRandom(blockIndex) {
+            const block = blocks[blockIndex];
+            block.items.forEach((item, idx) => {
+                const randomValue = Math.round(Math.random() * 100000) / 100000;
+                updateRowValues(block.id, idx + 1, randomValue);
+            });
+        }
+
+        function clearAllBlocks() {
+            blocks.forEach((block, blockIndex) => {
+                block.items.forEach((item, idx) => {
+                    updateRowValues(block.id, idx + 1, 0);
+                });
+            });
+        }
+
+        function fillAllRandomValues() {
+            blocks.forEach((block, blockIndex) => {
+                block.items.forEach((item, idx) => {
+                    const randomValue = Math.round(Math.random() * 100000) / 100000;
+                    updateRowValues(block.id, idx + 1, randomValue);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
