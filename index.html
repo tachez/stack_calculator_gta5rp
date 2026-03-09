@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Калькулятор стака - подбор 3 групп по 40 предметов</title>
+    <title>Калькулятор стака - подбор 3 групп с максимальным весом</title>
     <style>
         * {
             box-sizing: border-box;
@@ -727,7 +727,7 @@
     <div class="calculator">
         <div class="header">
             <h1>🧮 Калькулятор стака</h1>
-            <p>40 предметов • Подбор 3 групп • Цвет вкладки = достижение целевого веса в группах</p>
+            <p>40 предметов • Подбор 3 групп с МАКСИМАЛЬНЫМ весом • Цвет вкладки = достижение цели</p>
         </div>
         
         <!-- Область с временами смены цен -->
@@ -806,7 +806,7 @@
                     </div>
 
                     <button class="action-button" onclick="calculateThreeGroups()">
-                        🔄 Подобрать 3 группы
+                        🔄 Подобрать 3 группы с максимальным весом
                     </button>
 
                     <div class="quick-actions">
@@ -824,7 +824,7 @@
                     </div>
                     
                     <div class="hint">
-                        💡 Цвет вкладки = количество групп, достигших целевого веса<br>
+                        💡 Каждая группа подбирается с МАКСИМАЛЬНЫМ весом, не превышающим лимит<br>
                         <span class="strict-limit" id="limitHint">❌ Каждая группа ≤ 9.85 кг</span><br>
                         <span class="strict-limit">📝 Можно вводить вес до 100 кг</span>
                     </div>
@@ -1277,10 +1277,55 @@
 
         // Функция для проверки достижения целевого веса в группе
         function isGoalAchieved(groupSum) {
-            return Math.abs(groupSum - CURRENT_TARGET) < 0.1; // Допустимая погрешность 0.1 кг
+            // Проверяем, что сумма максимально близка к цели (с погрешностью 0.05 кг)
+            return Math.abs(groupSum - CURRENT_TARGET) < 0.05;
         }
 
-        // Функция для подбора 3 групп
+        // Функция для нахождения оптимальной комбинации для одной группы
+        function findBestGroup(items, targetScaled, scale) {
+            const n = items.length;
+            const maxSum = targetScaled;
+            
+            // DP массив: dp[w] = { sum: максимальная сумма, items: индексы }
+            const dp = new Array(maxSum + 1);
+            for (let i = 0; i <= maxSum; i++) {
+                dp[i] = { sum: 0, items: [] };
+            }
+            
+            for (let i = 0; i < n; i++) {
+                const item = items[i];
+                if (item.used) continue;
+                
+                const itemWeightScaled = Math.round(item.weight * scale);
+                
+                for (let w = maxSum; w >= itemWeightScaled; w--) {
+                    const prevWeight = w - itemWeightScaled;
+                    const newSum = dp[prevWeight].sum + item.weight;
+                    
+                    if (dp[prevWeight].sum > 0 || prevWeight === 0) {
+                        if (newSum > dp[w].sum && newSum <= CURRENT_TARGET) {
+                            dp[w].sum = newSum;
+                            dp[w].items = [...dp[prevWeight].items, i];
+                        }
+                    }
+                }
+            }
+            
+            // Находим наилучшую сумму
+            let bestSum = 0;
+            let bestItems = [];
+            
+            for (let w = maxSum; w >= 0; w--) {
+                if (dp[w].sum > bestSum && dp[w].sum <= CURRENT_TARGET) {
+                    bestSum = dp[w].sum;
+                    bestItems = dp[w].items;
+                }
+            }
+            
+            return { sum: bestSum, itemIndices: bestItems };
+        }
+
+        // Функция для подбора 3 групп с максимальным весом
         function findThreeGroups() {
             const currentBlock = blocks[activeBlockIndex];
             const items = [];
@@ -1290,7 +1335,8 @@
                     items.push({
                         rowNum: item.rowNum,
                         weight: item.weight3,
-                        used: false
+                        used: false,
+                        originalItem: item
                     });
                 }
             });
@@ -1299,42 +1345,41 @@
                 return { groups: [], unused: [] };
             }
             
-            items.sort((a, b) => b.weight - a.weight);
-            
             const groups = [];
             const scale = 10;
             const targetScaled = Math.floor(CURRENT_TARGET * scale);
             
+            // Сортируем предметы по убыванию веса для лучшего подбора
+            items.sort((a, b) => b.weight - a.weight);
+            
+            // Подбираем до 3 групп
             for (let groupNum = 0; groupNum < 3; groupNum++) {
-                const availableItems = items.filter(item => !item.used);
-                if (availableItems.length === 0) break;
+                // Находим лучшую комбинацию для текущих доступных предметов
+                const result = findBestGroup(items, targetScaled, scale);
                 
-                const group = [];
-                let currentSumScaled = 0;
+                if (result.itemIndices.length === 0) break;
                 
-                availableItems.sort((a, b) => b.weight - a.weight);
+                // Формируем группу из найденных предметов
+                const group = {
+                    items: [],
+                    sum: result.sum,
+                    achieved: isGoalAchieved(result.sum)
+                };
                 
-                for (const item of availableItems) {
-                    const itemWeightScaled = Math.round(item.weight * scale);
-                    if (currentSumScaled + itemWeightScaled <= targetScaled) {
-                        group.push({
-                            rowNum: item.rowNum,
-                            weight: item.weight
-                        });
-                        currentSumScaled += itemWeightScaled;
-                        item.used = true;
-                    }
-                }
-                
-                if (group.length > 0) {
-                    groups.push({
-                        items: group,
-                        sum: currentSumScaled / scale,
-                        achieved: isGoalAchieved(currentSumScaled / scale)
+                // Добавляем предметы в группу и помечаем их как использованные
+                result.itemIndices.forEach(index => {
+                    const item = items[index];
+                    group.items.push({
+                        rowNum: item.rowNum,
+                        weight: item.weight
                     });
-                }
+                    item.used = true;
+                });
+                
+                groups.push(group);
             }
             
+            // Собираем неиспользованные предметы
             const unused = items.filter(item => !item.used).map(item => ({
                 rowNum: item.rowNum,
                 weight: item.weight
@@ -1367,7 +1412,7 @@
                 groupDiv.className = `group-result ${groupColors[index]}`;
                 
                 // Добавляем индикатор достижения цели
-                const achievedMark = group.achieved ? ' ✅' : '';
+                const achievedMark = group.achieved ? ' ✅ ЦЕЛЬ ДОСТИГНУТА!' : '';
                 
                 const header = document.createElement('div');
                 header.className = 'group-header';
